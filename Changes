@@ -1,0 +1,163 @@
+0.023   2024-08-29  Released-By: PERLANCAR; Urgency: low
+
+        - No functional changes.
+
+        - [build] Rebuild with updated Math::Image::CalcResized (0.006).
+
+
+0.022   2024-01-15  Released-By: PERLANCAR; Urgency: medium
+
+        - [cli downsize-image] [ux] Add -S as shortcut for --downsize-to ''
+          (--no-downsize).
+
+
+0.021   2023-06-26  Released-By: PERLANCAR; Urgency: low
+
+        - No functional changes.
+
+        - [ux] Log convert/downsize command at info, not trace.
+
+
+0.020   2023-03-01  Released-By: PERLANCAR; Urgency: medium
+
+        - Add utilities convert-image-to-jpg (img2jpg, png2jpg),
+          convert-image-to-png (img2png, jpg2png).
+
+        - Add --quality (-q) option to the convert-* utilities.
+
+
+0.019   2022-05-08  Released-By: PERLANCAR; Urgency: low
+
+        - No functional changes.
+
+        - [build] Rebuild with newer
+          Pod::Weaver::Section::PERLANCAR::Contributing and
+          Perinci::Sub::To::CLIDocData to tweak generated POD for CLI's.
+
+
+0.018   2022-05-08  Released-By: PERLANCAR; Urgency: low
+
+        - No functional changes.
+
+        - [build] Rebuild with newer Perinci::CmdLine::POD to helpfully add text
+          in Synopsis to refer to examples in Examples section.
+
+
+0.017   2022-05-08  Released-By: PERLANCAR; Urgency: medium
+
+	- [cli downsize-image] Tweak regex to recognize previously
+	  downsized image.
+
+
+0.016   2022-05-08  Released-By: PERLANCAR; Urgency: medium
+
+        [cli downsize-image]
+
+	- [bugfix] In dry-run mode, operation was
+	  assumed failure.
+
+	- [ux] By default skip previously downsized filenames (to force, use
+          --no-skip-downsized) and WhatsApp images (to force, use
+          --no-skip-whatsapp).
+
+	- Make -q have a long option name: --quality.
+
+
+0.015   2022-05-06  Released-By: PERLANCAR; Urgency: low
+
+	- No functional changes.
+
+	- [ux] [logging] Tweak level of delete message from trace -> info.
+
+
+0.014   2022-05-06  Released-By: PERLANCAR; Urgency: medium
+
+	- [bugfix] --1526 & --2048 were not flag and ate an extra argument.
+
+	- [cli downsize-image] Add option --trash-original (-T) as an
+	  alternative to --delete-original (-D).
+
+
+0.013   2022-05-06  Released-By: PERLANCAR; Urgency: medium
+
+	- [ux] [cli downsize-image] Add shortcut options --1536 and --2048
+	  for --downsize-to=1536, --downsize-to=2048, respectively.
+
+
+0.012   2022-02-10  Released-By: PERLANCAR; Urgency: low
+
+        - No functional changes.
+
+        - Second attempt tweaking Abstract of img2pdf.
+
+
+0.011   2022-02-10  Released-By: PERLANCAR; Urgency: low
+
+        - No functional changes.
+
+        - Tweak Abstract of img2pdf.
+
+
+0.010   2022-01-22  Released-By: PERLANCAR; Urgency: low
+
+        - No functional changes.
+
+        - Tweak img2pdf's summary.
+
+
+0.009   2022-01-16  Released-By: PERLANCAR; Urgency: medium
+
+	- [ux] Add shorter alias for convert-image-to-pdf: img2pdf.
+
+
+0.008   2021-10-12  Released-By: PERLANCAR; Urgency: low
+
+        - No functional changes.
+
+	- [build] [doc] Rebuild with Math::Image::CalcResized 0.005 to add
+          description to image-resize-notation-to-human.
+
+
+0.007   2021-10-12  Released-By: PERLANCAR; Urgency: medium
+
+	- [cli convert-image-to] [cli convert-image-to-pdf] Also add
+	  --delete-original (-D) option.
+
+	- [doc] List included CLIs in main module's Description.
+
+
+0.006   2021-10-12  Released-By: PERLANCAR; Urgency: medium
+
+	[cli downsize-image]
+
+        - Add option --delete-original.
+
+        - [ux] Return 500 if all files failed.
+
+
+0.005   2021-10-05  Released-By: PERLANCAR; Urgency: medium
+
+	- Add utilities: convert-image-to, convert-image-to-pdf.
+
+
+0.004   2020-12-24  Released-By: PERLANCAR; Urgency: low
+
+        - No functional changes.
+
+        - [build] Rebuild with new Math::Image::CalcResized (0.004) to mention
+          'imgsize' script.
+
+
+0.003   2020-09-23  Released-By: PERLANCAR; Urgency: medium
+
+	- Add CLI: image-resize-notation-to-human.
+
+
+0.002   2020-09-23  Released-By: PERLANCAR; Urgency: medium
+
+	- Add CLI: calc-image-resized-size.
+
+
+0.001   2020-06-25  Released-By: PERLANCAR
+
+	- First release.
