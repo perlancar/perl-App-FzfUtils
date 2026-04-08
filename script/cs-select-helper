@@ -1,0 +1,48 @@
+#!perl
+
+use 5.010;
+use strict;
+use warnings;
+
+my $prog = "cs-select-helper";
+
+if (@ARGV < 2) {
+    die "$prog: Usage: $0 <jsonfile> <content>...\n";
+}
+
+my $jsonfile = shift @ARGV;
+my $content = join " ", @ARGV;
+
+my ($id) = $content =~ /\[id=(\d+)\]/
+    or die "$prog: Content does not contain id=<number>\n";
+
+my $data;
+{
+    open my $fh, "<", $jsonfile or die "$prog: Cannot open file $jsonfile: $!\n";
+    local $/;
+    my $content = <$fh>;
+    require JSON::PP;
+    $data = JSON::PP::decode_json($content);
+    close $fh;
+}
+ref($data) eq 'HASH' or die "$prog: Data in JSON file '$jsonfile' is not a hash\n";
+
+$data->{$id} or die "$prog: ID '$id' not known in JSON file '$jsonfile'\n";
+
+require Clipboard::Any;
+my $res = Clipboard::Any::add_clipboard_content(content => $data->{$id});
+$res->[0] == 200 or die "$prog: Cannot add to clipboard: $res->[0] - $res->[1]\n";
+
+1;
+
+# ABSTRACT: cs-select helper script
+# PODNAME:
+
+=head1 SYNOPSIS
+
+Used by L<cs-select>.
+
+
+=head1 SEE ALSO
+
+L<cs-select>.
