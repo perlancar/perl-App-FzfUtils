@@ -216,19 +216,22 @@ sub cs_select {
             my @tags = @{ $h1->tags };
             for my $h2 (grep { $_->isa("Org::Parser::Tiny::Node::Headline") && $_->level == 2 } @{ $h1->children }) {
                 $id++;
-                my $orig_content = $h2->as_string;
-                $orig_content =~ s/\A.+\R//; # dump the heading
+                my $title = $h2->title;
+                my $content = $h2->as_string;
+                $content =~ s/\A.+\R//; # dump the raw heading
 
-                my $clip_content = $orig_content;
+                my $clip_content;
                 if ($args{wrap}) {
-                    $clip_content = Text::ANSI::Util::ta_wrap($clip_content, $args{wrap});
+                    $clip_content = $title . ":\n" . Text::ANSI::Util::ta_wrap($content, $args{wrap});
+                } else {
+                    $clip_content = $title . ":\n" . $content;
                 }
 
-                (my $content = $orig_content) =~ s/\R+/ /g;
+                (my $line_content = $content) =~ s/\R+/ /g;
                 my $line = join(
                     "",
                     "[id=$id][title=", $h2->title, "]",
-                    $content,
+                    $line_content,
                     "[category=$category]",
                 );
                 push @lines, "$line\n";
