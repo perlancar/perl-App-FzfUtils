@@ -12,6 +12,13 @@ use Log::ger;
 
 our %SPEC;
 
+our %argspecsopt_fzf = (
+    no_hscroll => {
+        summary => 'Will pass --no-hscroll to fzf',
+        schema => 'true*',
+    },
+);
+
 $SPEC{':package'} = {
     v => 1.1,
     summary => 'Utilities related to fzf',
@@ -179,7 +186,9 @@ single-line entry into the original.
 Some Org tags are used to customize how the entry is displayed or copied to
 clipboard.
 
-**no_copy_title**. Do not copy the title to clipboard.
+**no_copy_title**. Do not copy the title to clipboard, only the content.
+
+**exclude**. Do not include this entry (or any child entries).
 
 MARKDOWN
     args => {
@@ -192,6 +201,7 @@ MARKDOWN
             schema => 'posint*',
             cmdline_aliases => {w=>{}},
         },
+        %argspecsopt_fzf,
     },
     deps => {
         all => [
@@ -226,6 +236,10 @@ sub cs_select {
                 my $title = $h2->title;
                 my $content = $h2->as_string;
                 my @h2_tags = @{ $h2->tags };
+
+                my $exclude = (grep {$_ eq 'exclude'} @h1_tags, @h2_tags);
+                next if $exclude;
+
                 $content =~ s/\A.+\R//; # dump the raw heading
 
                 my $no_copy_title = (grep {$_ eq 'no_copy_title'} @h1_tags, @h2_tags);
@@ -256,7 +270,13 @@ sub cs_select {
         close $tempfh;
     } # PREPROCESS_TEMPLATE
 
-    my $pid = IPC::Open2::open2(my $out, my $in, qq[fzf --bind 'enter:execute-silent(cs-select-helper $jsonfile {})']);
+    my @fzf_opts;
+    if ($args{no_hscroll}) {
+        push @fzf_opts, "--no-hscroll";
+    }
+    my $fzf_opts = join(" ", @fzf_opts);
+
+    my $pid = IPC::Open2::open2(my $out, my $in, qq[fzf $fzf_opts --bind 'enter:execute-silent(cs-select-helper $jsonfile {})']);
     for my $line (@lines) {
         print $in $line;
     }
