@@ -202,8 +202,8 @@ MARKDOWN
             cmdline_aliases => {w=>{}},
         },
         %argspecsopt_fzf,
-        raw_json => {
-            summary => 'Output the raw JSON file then exit',
+        gen_json => {
+            summary => 'Instead of running fzf, generate the raw JSON file then exit',
             schema => 'true*',
         },
     },
@@ -268,7 +268,7 @@ sub cs_select {
             }
         }
 
-        if ($args{raw_json}) {
+        if ($args{gen_json}) {
             return [200, "OK", JSON::PP::encode_json($dict)];
         }
 
