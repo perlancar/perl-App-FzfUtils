@@ -1,6 +1,16 @@
+0.006   2026-10-13  Released-By: PERLANCAR; Urgency: medium; Backward-Incompatible: yes
+
+        [cli cs-select]
+
+        - Add option --gen-html to generate HTML where user can do selecting on
+          the browser.
+
+        - [backward incompatible] Rename --raw-json to --gen-json.
+
+
 0.005   2026-10-13  Released-By: PERLANCAR; Urgency: medium
 
-        - [util cs-select] Add option: --raw-json.
+        - [cli cs-select] Add option: --raw-json.
 
 
 0.004   2026-08-27  Released-By: PERLANCAR; Urgency: medium
@@ -15,7 +25,7 @@
 
 0.002   2026-04-08  Released-By: PERLANCAR; Urgency: medium
 
-        - [utility cs-select] Tweak added clipboard content.
+        - [cli cs-select] Tweak added clipboard content.
 
 
 0.001   2026-04-08  Released-By: PERLANCAR
