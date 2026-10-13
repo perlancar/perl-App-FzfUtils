@@ -1,3 +1,8 @@
+0.005   2026-10-13  Released-By: PERLANCAR; Urgency: medium
+
+        - [util cs-select] Add option: --raw-json.
+
+
 0.004   2026-08-27  Released-By: PERLANCAR; Urgency: medium
 
         - [cli cs-select] Add option --no-hscroll.
