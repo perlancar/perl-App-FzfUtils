@@ -202,6 +202,10 @@ MARKDOWN
             cmdline_aliases => {w=>{}},
         },
         %argspecsopt_fzf,
+        raw_json => {
+            summary => 'Output the raw JSON file then exit',
+            schema => 'true*',
+        },
     },
     deps => {
         all => [
@@ -260,8 +264,12 @@ sub cs_select {
                     "[category=$category]",
                 );
                 push @lines, "$line\n";
-                $dict->{$id} = $clip_content;
+                $dict->{$id} = {clip_content=>$clip_content, line=>$line};
             }
+        }
+
+        if ($args{raw_json}) {
+            return [200, "OK", JSON::PP::encode_json($dict)];
         }
 
         (my $tempfh, $jsonfile) = File::Temp::tempfile('XXXXXXXX', TMPDIR=>1, SUFFIX=>'.json');
