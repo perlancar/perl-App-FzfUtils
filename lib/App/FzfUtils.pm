@@ -134,6 +134,186 @@ sub fzf2clip_loop {
 sub _gen_cs_select_html {
     my $dict = shift;
 
+    require JSON::PP;
+
+    # Do not interpolate the data directly into Javascript.  Apart from quoting
+    # problems, a line containing "</script>" would otherwise terminate the
+    # script element.  JSON escapes are understood by JSON.parse after the text
+    # has been read from this non-executable element.
+    my @ids = sort {
+        $a =~ /\A\d+\z/ && $b =~ /\A\d+\z/ ? $a <=> $b : $a cmp $b
+    } keys %$dict;
+    my @items = map {
+        +{id => $_, line => $dict->{$_}{line},
+          clip_content => $dict->{$_}{clip_content}}
+    } @ids;
+    my $json = JSON::PP->new->canonical->encode(\@items);
+    $json =~ s/&/\\u0026/g;
+    $json =~ s/</\\u003c/g;
+    $json =~ s/>/\\u003e/g;
+    $json =~ s/\x{2028}/\\u2028/g;
+    $json =~ s/\x{2029}/\\u2029/g;
+
+    my $html = <<'HTML';
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cs-select</title>
+<style>
+:root { color-scheme: light dark; font-family: ui-monospace, SFMono-Regular, Consolas, monospace }
+* { box-sizing: border-box }
+body { margin: 0; background: Canvas; color: CanvasText }
+#search { position: sticky; top: 0; width: 100%; padding: .75rem 1rem; border: 0;
+  border-bottom: 1px solid GrayText; outline: 0; font: inherit; background: Canvas }
+#status { padding: .35rem 1rem; color: GrayText; font-size: .85rem }
+#matches { margin: 0; padding: 0; list-style: none }
+#matches li { padding: .4rem 1rem; white-space: pre-wrap; overflow-wrap: anywhere; cursor: default }
+#matches li.selected { color: HighlightText; background: Highlight }
+#empty { padding: .75rem 1rem; color: GrayText }
+</style>
+</head>
+<body>
+<input id="search" type="text" autocomplete="off" spellcheck="false"
+       aria-label="Search" placeholder="Type to search; Enter copies; Up/Down selects">
+<div id="status" role="status" aria-live="polite"></div>
+<ul id="matches" role="listbox"></ul>
+<script id="cs-items" type="application/json">__CS_ITEMS__</script>
+<script>
+(() => {
+  'use strict';
+  const items = JSON.parse(document.getElementById('cs-items').textContent);
+  const input = document.getElementById('search');
+  const list = document.getElementById('matches');
+  const status = document.getElementById('status');
+  let matches = [];
+  let selected = 0;
+
+  // A compact fzf-like ranker: every query character must occur in order.
+  // Consecutive characters and word/camel-case starts receive large bonuses;
+  // gaps and late starts are penalized. Whitespace-separated terms are ANDed.
+  function termScore(text, term, caseSensitive) {
+    const haystack = caseSensitive ? text : text.toLowerCase();
+    const needle = caseSensitive ? term : term.toLowerCase();
+    if (!needle.length) return 0;
+    let previous = new Map();
+    for (let qi = 0; qi < needle.length; qi++) {
+      const current = new Map();
+      for (let ti = 0; ti < haystack.length; ti++) {
+        if (haystack[ti] !== needle[qi]) continue;
+        const before = ti ? text[ti - 1] : '';
+        const here = text[ti];
+        const boundary = ti === 0 || /[\s_\-\/.:[\]()]/.test(before);
+        const camel = /[a-z]/.test(before) && /[A-Z]/.test(here);
+        const base = 10 + (boundary ? 18 : 0) + (camel ? 14 : 0);
+        if (qi === 0) {
+          current.set(ti, base - ti);
+        } else {
+          let best = -Infinity;
+          for (const [pi, score] of previous) {
+            if (pi >= ti) continue;
+            const gap = ti - pi - 1;
+            best = Math.max(best, score + base + (gap === 0 ? 24 : -gap));
+          }
+          if (best > -Infinity) current.set(ti, best);
+        }
+      }
+      if (!current.size) return null;
+      previous = current;
+    }
+    return Math.max(...previous.values());
+  }
+
+  function score(text, query) {
+    const terms = query.trim().split(/\s+/).filter(Boolean);
+    if (!terms.length) return 0;
+    let total = 0;
+    for (const term of terms) {
+      const part = termScore(text, term, /[A-Z]/.test(term));
+      if (part === null) return null;
+      total += part;
+    }
+    return total;
+  }
+
+  function render() {
+    const query = input.value;
+    matches = items.map((item, order) => ({item, order, score: score(item.line, query)}))
+      .filter(match => match.score !== null)
+      .sort((a, b) => b.score - a.score || a.order - b.order);
+    selected = Math.min(selected, Math.max(0, matches.length - 1));
+    list.replaceChildren();
+    for (let i = 0; i < matches.length; i++) {
+      const li = document.createElement('li');
+      li.textContent = matches[i].item.line;
+      li.setAttribute('role', 'option');
+      li.setAttribute('aria-selected', i === selected ? 'true' : 'false');
+      if (i === selected) li.className = 'selected';
+      li.addEventListener('mousedown', event => {
+        event.preventDefault();
+        selected = i;
+        paintSelection();
+      });
+      list.appendChild(li);
+    }
+    status.textContent = matches.length ? `${matches.length} match${matches.length === 1 ? '' : 'es'}` : 'No matches';
+  }
+
+  function paintSelection() {
+    [...list.children].forEach((row, i) => {
+      row.classList.toggle('selected', i === selected);
+      row.setAttribute('aria-selected', i === selected ? 'true' : 'false');
+    });
+    list.children[selected]?.scrollIntoView({block: 'nearest'});
+  }
+
+  async function copySelected() {
+    if (!matches.length) return;
+    const content = matches[selected].item.clip_content;
+    try {
+      if (!navigator.clipboard || !window.isSecureContext) throw new Error('clipboard unavailable');
+      await navigator.clipboard.writeText(content);
+    } catch (_) {
+      const area = document.createElement('textarea');
+      area.value = content;
+      area.style.cssText = 'position:fixed;left:-9999px;top:0';
+      document.body.appendChild(area);
+      area.select();
+      if (!document.execCommand('copy')) {
+        area.remove();
+        status.textContent = 'Could not copy to clipboard';
+        input.focus();
+        return;
+      }
+      area.remove();
+    }
+    status.textContent = 'Copied to clipboard';
+    input.focus();
+  }
+
+  input.addEventListener('input', () => { selected = 0; render() });
+  input.addEventListener('keydown', event => {
+    if (event.key === 'ArrowDown' && matches.length) {
+      event.preventDefault(); selected = Math.min(selected + 1, matches.length - 1); paintSelection();
+    } else if (event.key === 'ArrowUp' && matches.length) {
+      event.preventDefault(); selected = Math.max(selected - 1, 0); paintSelection();
+    } else if (event.key === 'Enter') {
+      event.preventDefault(); copySelected();
+    } else if (event.key === 'Escape') {
+      input.value = ''; selected = 0; render();
+    }
+  });
+
+  render();
+  input.focus();
+})();
+</script>
+</body>
+</html>
+HTML
+    $html =~ s/__CS_ITEMS__/$json/;
+    return $html;
 }
 
 $SPEC{cs_select} = {
