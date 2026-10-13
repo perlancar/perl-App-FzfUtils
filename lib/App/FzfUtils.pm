@@ -131,6 +131,11 @@ sub fzf2clip_loop {
     [200, "OK"];
 }
 
+sub _gen_cs_select_html {
+    my $dict = shift;
+
+}
+
 $SPEC{cs_select} = {
     v => 1.1,
     summary => "Select entries from template to clipboard",
@@ -206,6 +211,13 @@ MARKDOWN
             summary => 'Instead of running fzf, generate the raw JSON file then exit',
             schema => 'true*',
         },
+        gen_html => {
+            summary => 'Instead of running fzf, generate the HTML (which lets user selects the items via browser), then exit',
+            schema => 'true*',
+        },
+    },
+    args_rels => {
+        choose_one => [qw/gen_json gen_html/],
     },
     deps => {
         all => [
@@ -270,6 +282,9 @@ sub cs_select {
 
         if ($args{gen_json}) {
             return [200, "OK", JSON::PP::encode_json($dict)];
+        }
+        if ($args{gen_html}) {
+            return [200, "OK", _gen_cs_select_html($dict)];
         }
 
         (my $tempfh, $jsonfile) = File::Temp::tempfile('XXXXXXXX', TMPDIR=>1, SUFFIX=>'.json');
